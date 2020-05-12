@@ -1,0 +1,49 @@
+# demo app config
+
+# service for web worker
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+    role: demo-app-worker
+  namespace: default
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+    nodePort: 32010
+  selector:
+    role: demo-app-worker
+---
+# demo-app worker
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: demo-app
+    role: demo-app-worker
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  name: demo-app-worker
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      role: demo-app-worker
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        role: demo-app-worker
+    spec:
+      containers:
+      - image: {{.Values.registry}}demo-app-worker:0.0.1
+        name: demo-app-worker
+        ports:
+        - containerPort: 80
+          protocol: TCP
